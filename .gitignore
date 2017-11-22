@@ -1,0 +1,30 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Temporary files
+*.swp
+*~
+
+# Core dumps
+core
+
+# Code coverage
+.coverage
+/htmlcov/
+
+# Pweave outputs
+/examples/*.html
+/examples/figures/
+
+# setup.py outputs
+/*.egg-info/
+/.eggs/
+
+# mkdocs outputs
+/site
+
+# IDE configuration
+.vscode
+.idea

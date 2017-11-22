@@ -1,0 +1,16 @@
+site_name: dsntnn
+site_author: Aiden Nibali
+theme: readthedocs
+repo_url: https://github.com/anibali/dsntnn
+strict: true
+markdown_extensions:
+  - pymdownx.snippets
+  - pymdownx.arithmatex
+extra_javascript:
+  - https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML
+pages:
+  - Home: 'index.md'
+  - API: 'api.md'
+  - Examples:
+    - 'Basic usage': 'examples/basic_usage.md'
+  - License: 'license.md'
