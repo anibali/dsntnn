@@ -2,7 +2,7 @@ import torch
 from torch.autograd import Variable
 from tests.common import TestCase
 
-from dsntnn import euclidean_loss
+from dsntnn import average_loss, euclidean_losses
 
 
 class TestEuclideanLoss(TestCase):
@@ -20,7 +20,7 @@ class TestEuclideanLoss(TestCase):
         in_var = Variable(input_tensor, requires_grad=True)
 
         expected_loss = torch.Tensor([5])
-        actual_loss = euclidean_loss(in_var, Variable(target))
+        actual_loss = average_loss(euclidean_losses(in_var, Variable(target)))
         expected_grad = torch.Tensor([
             [[0.15, 0.20], [0.15, 0.20]],
             [[0.15, 0.20], [0.15, 0.20]],
@@ -48,6 +48,8 @@ class TestEuclideanLoss(TestCase):
         ])
 
         expected = torch.Tensor([0])
-        actual = euclidean_loss(Variable(output), Variable(target), Variable(mask))
+        actual = average_loss(
+            euclidean_losses(Variable(output), Variable(target)),
+            Variable(mask))
 
         self.assertEqual(expected, actual.data)

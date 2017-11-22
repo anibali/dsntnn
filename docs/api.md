@@ -38,30 +38,30 @@ first dimension).
 dsntnn.softmax_2d(tensor)
 ```
 
+Calculates the softmax over 2D tensors by collapsing the last two dimensions.
+
 ## DSNT
 
 ```python
 dsntnn.dsnt(heatmaps)
 ```
 
-## Main loss term
-
-### Euclidean loss
+## Euclidean loss
 
 ```python
-dsntnn.euclidean_loss(actual, target, mask=None)
+dsntnn.euclidean_losses(actual, target)
 ```
 
 ## Regularization
 
 There are multiple regularization strategies included in this package.
-We have found `js_reg_loss` to perform best in practice.
+We have found `js_reg_losses` to perform best in practice.
 
 ### Divergence regularization
 
 ```python
-dsntnn.js_reg_loss(heatmaps, mu_t, sigma_t, mask=None) # Jensen-Shannon divergence
-dsntnn.kl_reg_loss(heatmaps, mu_t, sigma_t, mask=None) # Kullback-Leibler divergence
+dsntnn.js_reg_losses(heatmaps, mu_t, sigma_t) # Jensen-Shannon divergence
+dsntnn.kl_reg_losses(heatmaps, mu_t, sigma_t) # Kullback-Leibler divergence
 ```
 
 Calculates the divergence between `heatmaps` and 2D spherical Gaussians
@@ -72,19 +72,29 @@ Arguments
 * `heatmaps ([B] x L x H x W tensor)` — the predicted heatmaps
 * `mu_t ([B] x L x 2 tensor)` — the ground truth location coordinates, in normalized units
 * `sigma_t (float)` — the target standard deviation, in normalized units
-* `mask ([B] x L tensor)` — location mask (see [Masked average](#masked-average))
+
+### Variance regularization
+
+```python
+dsntnn.variance_reg_losses(heatmaps, sigma_t)
+```
+
+Arguments
+
+* `heatmaps ([B] x L x H x W tensor)` — the predicted heatmaps
+* `sigma_t (float)` — the target standard deviation, in normalized units
 
 ## Utility
 
-### Masked average
+### Average loss
 
-Combines per-location losses into an overall loss by taking the mean.
+Combines per-location losses into an average loss by taking the mean.
 
 If the `mask` argument is specified, it must be a binary mask.
 Locations where `mask` has value 0 will be excluded from the overall loss.
 
 ```python
-dsntnn.masked_average(losses, mask=None)
+dsntnn.average_loss(losses, mask=None)
 ```
 
 Arguments
@@ -94,4 +104,4 @@ Arguments
 
 Returns
 
-* `float` — the combined loss
+* `loss (float)` — the combined loss

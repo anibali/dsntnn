@@ -19,8 +19,8 @@ Please refer to the [basic usage guide](examples/basic_usage.md).
 $ python3 setup.py examples
 ```
 
-HTML reports will be saved in the `examples/` directory. Please note that the `dsnt` package must
-be installed with `pip install` before the examples will run correctly.
+HTML reports will be saved in the `examples/` directory. Please note that the `dsntnn` package must
+be installed with `pip install` for the examples to run correctly.
 
 ### Running tests
 

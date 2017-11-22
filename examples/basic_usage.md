@@ -127,12 +127,13 @@ for i in range(400):
     # Forward pass
     coords, heatmaps = model(input_var)
 
-    # This value corresponds to 1 pixel standard deviation
+    # Per-location euclidean losses
+    euc_losses = dsntnn.euclidean_losses(coords, target_var)
+    # Per-location regularization losses
     sigma = 2.0 / heatmaps.size(-1)
-    # Euclidean loss with regularization
-    euc_loss = dsntnn.euclidean_loss(coords, target_var)
-    reg_loss = dsntnn.js_reg_loss(heatmaps, target_var, sigma)
-    loss = euc_loss + reg_loss 
+    reg_losses = dsntnn.js_reg_losses(heatmaps, target_var, sigma)
+    # Combine losses into an overall loss
+    loss = dsntnn.average_loss(euc_losses + reg_losses)
 
     # Calculate gradients
     optimizer.zero_grad()
