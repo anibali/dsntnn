@@ -5,7 +5,7 @@
 ### Normalized units
 
 Sizes and coordinates may be specified in terms of pixels or "normalized units".
-In normalized units, the top-left corner of the image is (-1, -1) and the bottom-right
+In normalized units, the top-left corner of a 2D image is (-1, -1) and the bottom-right
 corner is (1, 1).
 
 The equation for converting an x-coordinate from pixels to normalized units is
@@ -20,12 +20,13 @@ $$
 d_{norm} = \dfrac{2d_{px}}{width}
 $$
 
-### Dimensions
+### Tensor dimensions
 
 The following variables are used when denoting tensor sizes.
 
 * `B` — batch size
 * `L` — number of locations per image
+* `D` — the number of coordinate dimensions (2)
 * `H` — height
 * `W` — width
 
@@ -35,10 +36,10 @@ first dimension).
 ## Heatmap normalization
 
 ```python
-dsntnn.softmax_2d(tensor)
+dsntnn.flat_softmax(tensor)
 ```
 
-Calculates the softmax over 2D tensors by collapsing the last two dimensions.
+Calculates the softmax as if the last D dimensions were flattened.
 
 ## DSNT
 
@@ -64,13 +65,13 @@ dsntnn.js_reg_losses(heatmaps, mu_t, sigma_t) # Jensen-Shannon divergence
 dsntnn.kl_reg_losses(heatmaps, mu_t, sigma_t) # Kullback-Leibler divergence
 ```
 
-Calculates the divergence between `heatmaps` and 2D spherical Gaussians
-with standard deviation `sigma_t` means `mu_t`.
+Calculates the divergence between `heatmaps` and spherical Gaussians
+with standard deviation `sigma_t` and means `mu_t`.
 
 Arguments
 
 * `heatmaps ([B] x L x H x W tensor)` — the predicted heatmaps
-* `mu_t ([B] x L x 2 tensor)` — the ground truth location coordinates, in normalized units
+* `mu_t ([B] x L x D tensor)` — the ground truth location coordinates, in normalized units
 * `sigma_t (float)` — the target standard deviation, in normalized units
 
 ### Variance regularization

@@ -13,7 +13,7 @@ def _test_reg_loss(tc, loss_method, uses_mean=True):
     # Helper function to calculate the loss between the target and a Gaussian heatmap
     # parameterized by `mean` and `stddev`.
     def calc_loss(mean, stddev):
-        hm = make_gauss(mean, 5, 5, sigma=stddev)
+        hm = make_gauss(mean, [5, 5], sigma=stddev)
         args = [hm]
         if uses_mean: args.append(target_mean)
         args.append(target_stddev)
@@ -75,3 +75,16 @@ class TestJSRegLoss(TestCase):
 class TestVarianceRegLoss(TestCase):
     def test_variance_reg_loss(self):
         _test_reg_loss(self, variance_reg_losses, uses_mean=False)
+
+    def test_exact(self):
+        t = torch.Tensor([
+            [
+                [0.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.1, 0.0],
+                [0.0, 0.1, 0.6, 0.1],
+                [0.0, 0.0, 0.1, 0.0],
+            ]
+        ])
+
+        actual = average_loss(variance_reg_losses(Variable(t), 1))
+        self.assertEqual(1.8050, actual.data[0])

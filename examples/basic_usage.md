@@ -53,7 +53,7 @@ class CoordRegressionNetwork(nn.Module):
         # 2. Use a 1x1 conv to get one unnormalized heatmap per location
         unnormalized_heatmaps = self.hm_conv(fcn_out)
         # 3. Normalize the heatmaps
-        heatmaps = dsntnn.softmax_2d(unnormalized_heatmaps)
+        heatmaps = dsntnn.flat_softmax(unnormalized_heatmaps)
         # 4. Calculate the coordinates
         coords = dsntnn.dsnt(heatmaps)
 
