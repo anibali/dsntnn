@@ -130,8 +130,7 @@ for i in range(400):
     # Per-location euclidean losses
     euc_losses = dsntnn.euclidean_losses(coords, target_var)
     # Per-location regularization losses
-    sigma = 2.0 / heatmaps.size(-1)
-    reg_losses = dsntnn.js_reg_losses(heatmaps, target_var, sigma)
+    reg_losses = dsntnn.js_reg_losses(heatmaps, target_var, sigma_t=1.0)
     # Combine losses into an overall loss
     loss = dsntnn.average_loss(euc_losses + reg_losses)
 

@@ -8,7 +8,7 @@ from dsntnn import make_gauss, average_loss, kl_reg_losses, js_reg_losses, varia
 def _test_reg_loss(tc, loss_method, uses_mean=True):
     # Target mean and standard deviation
     target_mean = torch.Tensor([0, 0])
-    target_stddev = 0.4
+    target_stddev = 1.0
 
     # Helper function to calculate the loss between the target and a Gaussian heatmap
     # parameterized by `mean` and `stddev`.
@@ -61,7 +61,7 @@ class TestKLRegLoss(TestCase):
         mask = torch.Tensor([1, 0])
 
         actual = average_loss(
-            kl_reg_losses(Variable(t), Variable(coords), 1),
+            kl_reg_losses(Variable(t), Variable(coords), 2.0),
             Variable(mask))
 
         self.assertEqual(1.2228811717796824, actual.data[0])
@@ -86,5 +86,5 @@ class TestVarianceRegLoss(TestCase):
             ]
         ])
 
-        actual = average_loss(variance_reg_losses(Variable(t), 1))
+        actual = average_loss(variance_reg_losses(Variable(t), 2.0))
         self.assertEqual(1.8050, actual.data[0])

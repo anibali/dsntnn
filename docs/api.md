@@ -72,7 +72,7 @@ Arguments
 
 * `heatmaps ([B] x L x H x W tensor)` — the predicted heatmaps
 * `mu_t ([B] x L x D tensor)` — the ground truth location coordinates, in normalized units
-* `sigma_t (float)` — the target standard deviation, in normalized units
+* `sigma_t (float)` — the target standard deviation, in pixels
 
 ### Variance regularization
 
@@ -83,7 +83,7 @@ dsntnn.variance_reg_losses(heatmaps, sigma_t)
 Arguments
 
 * `heatmaps ([B] x L x H x W tensor)` — the predicted heatmaps
-* `sigma_t (float)` — the target standard deviation, in normalized units
+* `sigma_t (float)` — the target standard deviation, in pixels
 
 ## Utility
 
