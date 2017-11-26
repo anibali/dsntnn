@@ -12,8 +12,27 @@ from torch.autograd import Variable
 
 
 torch.set_default_tensor_type('torch.DoubleTensor')
-
 SEED = 0
+
+
+def print_matrix(tensor):
+    if isinstance(tensor, Variable):
+        tensor = tensor.data
+
+    assert(tensor.dim() >= 2)
+
+    if tensor.dim() > 2:
+        for t in tensor:
+            print_matrix(t)
+        return
+
+    print()
+    for row in tensor:
+        print('[', end='')
+        for elem in row:
+            print('{:9.6f}, '.format(elem), end='')
+        print('],')
+
 
 def is_iterable(obj):
     try:
@@ -21,6 +40,7 @@ def is_iterable(obj):
         return True
     except:
         return False
+
 
 class TestCase(unittest.TestCase):
     precision = 1e-5
