@@ -24,16 +24,53 @@ import torch.nn.functional
 from torch.autograd import Variable
 
 
-def _normalized_linspace(dim_size, type_as):
-    first = -(dim_size - 1) / dim_size
-    last = (dim_size - 1) / dim_size
-    vec = torch.linspace(first, last, dim_size)
-    if isinstance(type_as, Variable):
-        vec = Variable(vec, requires_grad=False)
-    return vec.type_as(type_as)
+def _type_as(tensor, other, requires_grad=False):
+    """Type a tensor to match the type of another object.
+
+    If `other` is a Variable, `tensor` will be wrapped in a Variable also.
+    """
+    if isinstance(other, Variable):
+        tensor = Variable(tensor, requires_grad=requires_grad)
+    return tensor.type_as(other)
+
+
+def _normalized_linspace(length, type_as):
+    """Generate a vector with values ranging from -1 to 1.
+
+    Note that the values correspond to the "centre" of each cell, so
+    -1 and 1 are always conceptually outside the bounds of the vector.
+    For example, if length = 4, the following vector is generated:
+
+    ```text
+     [ -0.75, -0.25,  0.25,  0.75 ]
+     ^              ^             ^
+    -1              0             1
+    ```
+
+    Args:
+        length: The length of the vector
+        type_as: An object to type the vector as
+
+    Returns:
+        The generated vector
+    """
+    first = -(length - 1) / length
+    last = (length - 1) / length
+    vec = torch.linspace(first, last, length)
+    return _type_as(vec, type_as)
 
 
 def _coord_expectation(heatmaps, dim, transform=None):
+    """Calculate the coordinate expected value along an axis.
+
+    Args:
+        heatmaps: Normalized heatmaps (probabilities)
+        dim: Dimension of the coordinate axis
+        transform: Coordinate transformation function, defaults to identity
+
+    Returns:
+        The coordinate expected value, `E[transform(X)]`
+    """
     dim_size = heatmaps.size()[dim]
     own_coords = _normalized_linspace(dim_size, type_as=heatmaps)
     if transform:
@@ -48,6 +85,23 @@ def _coord_expectation(heatmaps, dim, transform=None):
     if len(first_dims) > 0:
         expectations = expectations.view(*first_dims)
     return expectations
+
+
+def _coord_variance(heatmaps, dim):
+    """Calculate the coordinate variance along an axis.
+
+    Args:
+        heatmaps: Normalized heatmaps (probabilities)
+        dim: Dimension of the coordinate axis
+
+    Returns:
+        The coordinate variance, `Var[X] =  E[(X - E[x])^2]`
+    """
+    # mu_x = E[X]
+    mu_x = _coord_expectation(heatmaps, dim)
+    # var_x = E[(X - mu_x)^2]
+    var_x = _coord_expectation(heatmaps, dim, lambda x: (x - mu_x) ** 2)
+    return var_x
 
 
 def dsnt(heatmaps, ndims=2):
@@ -207,15 +261,6 @@ def js_reg_losses(heatmaps, mu_t, sigma_t):
     return divergences
 
 
-def _coord_variance(heatmaps, dim):
-    # NOTE: Works for any coordinate, not just xs
-    # mu = E[X]
-    mu_x = _coord_expectation(heatmaps, dim)
-    # var_x = E[(X - mu_x)^2]
-    var_x = _coord_expectation(heatmaps, dim, lambda x: (x - mu_x) ** 2)
-    return var_x
-
-
 def variance_reg_losses(heatmaps, sigma_t, ndims=2):
     """Calculate the loss between heatmap variances and target variance.
 
@@ -228,12 +273,9 @@ def variance_reg_losses(heatmaps, sigma_t, ndims=2):
         Per-location sum of square errors for variance.
     """
 
-    dim_range = range(-1, -(ndims + 1), -1)
-    variance = torch.stack([_coord_variance(heatmaps, dim) for dim in dim_range], -1)
-
-    # TODO: handle the case when heatmaps aren't square
-    sigma_t = 2 * sigma_t / heatmaps.size(-1)
-    var_t = sigma_t ** 2
-    sq_error = (variance - var_t) ** 2
+    variance = torch.stack([_coord_variance(heatmaps, d) for d in range(-ndims, 0)], -1)
+    heatmap_size = _type_as(torch.Tensor(list(heatmaps.size()[-ndims:])), variance)
+    target_variance = (2 * sigma_t / heatmap_size) ** 2
+    sq_error = (variance - target_variance) ** 2
 
     return sq_error.sum(-1, keepdim=False)
