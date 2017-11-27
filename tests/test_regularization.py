@@ -131,3 +131,16 @@ class TestVarianceRegLoss(TestCase):
         ]]])
         actual = average_loss(variance_reg_losses(Variable(t), 0.6, ndims=3))
         self.assertEqual(0.18564102213775013, actual.data[0])
+
+    def test_batch(self):
+        t = torch.Tensor([[
+            [
+                [0.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.1, 0.0],
+                [0.0, 0.1, 0.6, 0.1],
+                [0.0, 0.0, 0.1, 0.0],
+            ]
+        ]])
+
+        actual = average_loss(variance_reg_losses(Variable(t), 2.0))
+        self.assertEqual(28.88, actual.data[0])

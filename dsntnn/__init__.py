@@ -82,7 +82,7 @@ def _coord_expectation(heatmaps, dim, ndims, transform=None):
         if i != dim:
             summed = summed.sum(i, keepdim=True)
     summed = summed.view(summed.size(0), -1)
-    expectations = torch.mv(summed, own_coords)
+    expectations = summed.mul(own_coords.view(-1, own_coords.size(-1))).sum(-1, keepdim=False)
     if len(first_dims) > 0:
         expectations = expectations.view(*first_dims)
     return expectations
