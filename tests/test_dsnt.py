@@ -79,3 +79,21 @@ class TestDSNT(TestCase):
 
         expected_grad = self.SIMPLE_GRAD_INPUT.cuda()
         self.assertEqual(in_var.grad.data, expected_grad)
+
+    def test_3d(self):
+        inp = torch.Tensor([[
+            [0.00, 0.00, 0.00],
+            [0.00, 0.00, 0.00],
+            [0.00, 0.00, 0.00],
+        ], [
+            [0.00, 0.00, 0.00],
+            [0.00, 0.00, 0.00],
+            [1.00, 0.00, 0.00],
+        ], [
+            [0.00, 0.00, 0.00],
+            [0.00, 0.00, 0.00],
+            [0.00, 0.00, 0.00],
+        ]])
+
+        expected = torch.Tensor([[-2/3, 2/3, 0]])
+        self.assertEqual(dsnt(inp, ndims=3), expected)
