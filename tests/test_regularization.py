@@ -13,7 +13,7 @@ def _test_reg_loss(tc, loss_method, uses_mean=True):
     # Helper function to calculate the loss between the target and a Gaussian heatmap
     # parameterized by `mean` and `stddev`.
     def calc_loss(mean, stddev):
-        hm = make_gauss(mean, [5, 5], sigma=stddev)
+        hm = make_gauss(mean, [9, 9], sigma=stddev)
         args = [hm]
         if uses_mean: args.append(target_mean)
         args.append(target_stddev)
@@ -66,6 +66,19 @@ class TestKLRegLoss(TestCase):
 
         self.assertEqual(1.2228811717796824, actual.data[0])
 
+    def test_rectangular(self):
+        t = torch.Tensor([
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.1],
+            [0.0, 0.0, 0.0, 0.0, 0.1, 0.8],
+        ])
+        coords = torch.Tensor([[1, 1]])
+
+        actual = average_loss(kl_reg_losses(Variable(t), Variable(coords), 2.0))
+
+        self.assertEqual(1.2646753877545842, actual.data[0])
+
 
 class TestJSRegLoss(TestCase):
     def test_js_reg_loss(self):
@@ -87,4 +100,34 @@ class TestVarianceRegLoss(TestCase):
         ])
 
         actual = average_loss(variance_reg_losses(Variable(t), 2.0))
-        self.assertEqual(1.8050, actual.data[0])
+        self.assertEqual(28.88, actual.data[0])
+
+    def test_rectangular(self):
+        t = torch.Tensor([
+            [
+                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.1, 0.0, 0.0, 0.0],
+                [0.0, 0.1, 0.6, 0.1, 0.0, 0.0],
+                [0.0, 0.0, 0.1, 0.0, 0.0, 0.0],
+            ]
+        ])
+
+        actual = average_loss(variance_reg_losses(Variable(t), 2.0))
+        self.assertEqual(28.88, actual.data[0])
+
+    def test_3d(self):
+        t = torch.Tensor([[[
+            [0.000035, 0.000002, 0.000000],
+            [0.009165, 0.000570, 0.000002],
+            [0.147403, 0.009165, 0.000035],
+        ], [
+            [0.000142, 0.000009, 0.000000],
+            [0.036755, 0.002285, 0.000009],
+            [0.591145, 0.036755, 0.000142],
+        ], [
+            [0.000035, 0.000002, 0.000000],
+            [0.009165, 0.000570, 0.000002],
+            [0.147403, 0.009165, 0.000035],
+        ]]])
+        actual = average_loss(variance_reg_losses(Variable(t), 0.6, ndims=3))
+        self.assertEqual(0.18564102213775013, actual.data[0])

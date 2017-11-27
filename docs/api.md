@@ -80,6 +80,12 @@ Arguments
 dsntnn.variance_reg_losses(heatmaps, sigma_t)
 ```
 
+Calculates the mean-square-error between the variance of `heatmaps` and `sigma_t ** 2`.
+
+Note that this implementation works in pixel space, which is different from
+the version used in the DSNT paper. The losses returned by this function
+will be larger by a constant factor based on the size of the heatmap.
+
 Arguments
 
 * `heatmaps ([B] x L x H x W tensor)` — the predicted heatmaps
