@@ -73,7 +73,8 @@ To demonstrate the model in action, we're going to train on an image of a
 raccoon's eye.
 
 ```python
-raccoon_face = scipy.misc.imresize(scipy.misc.face()[200:400, 600:800, :], (40, 40))
+image_size = [40, 40]
+raccoon_face = scipy.misc.imresize(scipy.misc.face()[200:400, 600:800, :], image_size)
 eye_x, eye_y = 24, 26
 
 plt.imshow(raccoon_face)
@@ -90,11 +91,11 @@ raccoon_face_tensor = torch.from_numpy(raccoon_face).permute(2, 0, 1).float()
 input_tensor = raccoon_face_tensor.div(255).unsqueeze(0)
 input_var = Variable(input_tensor, requires_grad=False).cuda()
 
-eye_coords_tensor = torch.FloatTensor([[[eye_x, eye_y]]])
-target_tensor = eye_coords_tensor.div(40 / 2).sub(1)
+eye_coords_tensor = torch.Tensor([[[eye_x, eye_y]]])
+target_tensor = (eye_coords_tensor * 2 + 1) / torch.Tensor(image_size) - 1
 target_var = Variable(target_tensor, requires_grad=False).cuda()
 
-print('Target: {:0.4f}, {:0.4f}'.format(*list(target_tensor[0])))
+print('Target: {:0.4f}, {:0.4f}'.format(*list(target_tensor.squeeze())))
 ```
 
 The coordinate regression model needs to be told ahead of time how many
