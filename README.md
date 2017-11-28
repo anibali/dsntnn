@@ -31,18 +31,25 @@ $ python3 setup.py coverage # Run tests with code coverage
 
 ## Other implementations
 
-If you write an implementation of DSNT, please let me know so that I can add it
-to the list.
-
 * Tensorflow: [ashwhall/dsnt](https://github.com/ashwhall/dsnt)
+
+If you write your own implementation of DSNT, please let me know so that I can add it to
+the list. I would also *greatly* appreciate it if you could add the following notice
+to your implementation's README:
+
+> Code in this project implements ideas presented in the research paper
+> "Numerical Coordinate Regression with Convolutional Neural Networks" by Nibali et al.
+> If you use it in your own research project, please be sure to cite the
+> original paper appropriately.
 
 ## License and citation
 
 (C) 2017 Aiden Nibali
 
 This project is open source under the terms of the
-[Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0.html). If you use any part of this
-work in a research project, please cite the following paper:
+[Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0.html).
+
+If you use any part of this work in a research project, please cite the following paper:
 
 ```bibtex
 @misc{
