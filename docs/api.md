@@ -40,17 +40,34 @@ dsntnn.flat_softmax(tensor)
 
 Calculates the softmax as if the last D dimensions were flattened.
 
+Arguments
+
+* `tensor (B x L x H x W tensor)` — the tensor to normalize with a softmax
+
 ## DSNT
 
 ```python
 dsntnn.dsnt(heatmaps)
 ```
 
+Calculates numerical coordinates from normalized heatmaps.
+
+Arguments
+
+* `heatmaps (B x L x H x W tensor)` — the normalized heatmaps
+
 ## Euclidean loss
 
 ```python
 dsntnn.euclidean_losses(actual, target)
 ```
+
+Calculates the euclidean (L2) losses between coordinates.
+
+Arguments
+
+* `actual (B x L x D tensor)` — the predicted coordinates
+* `target (B x L x D tensor)` — the ground truth target coordinates
 
 ## Regularization
 
