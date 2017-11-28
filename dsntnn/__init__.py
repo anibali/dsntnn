@@ -60,7 +60,7 @@ def _normalized_linspace(length, type_as):
     return _type_as(vec, type_as)
 
 
-def _coord_expectation(heatmaps, dim, ndims, transform=None):
+def _coord_expectation(heatmaps, dim, transform=None):
     """Calculate the coordinate expected value along an axis.
 
     Args:
@@ -71,24 +71,22 @@ def _coord_expectation(heatmaps, dim, ndims, transform=None):
     Returns:
         The coordinate expected value, `E[transform(X)]`
     """
+
     dim_size = heatmaps.size()[dim]
     own_coords = _normalized_linspace(dim_size, type_as=heatmaps)
     if transform:
         own_coords = transform(own_coords)
-    first_dims = heatmaps.size()[:-ndims]
-    hm_dims = heatmaps.size()[-ndims:]
-    summed = heatmaps.view(-1, *hm_dims)
-    for i in range(-ndims, 0):
+    summed = heatmaps.view(-1, *heatmaps.size()[2:])
+    for i in range(2 - heatmaps.dim(), 0):
         if i != dim:
             summed = summed.sum(i, keepdim=True)
     summed = summed.view(summed.size(0), -1)
-    expectations = summed.mul(own_coords.view(-1, own_coords.size(-1))).sum(-1, keepdim=False)
-    if len(first_dims) > 0:
-        expectations = expectations.view(*first_dims)
+    expectations = summed.mul(own_coords.view(-1, own_coords.size(-1))).sum(-1)
+    expectations = expectations.view(*heatmaps.size()[:2])
     return expectations
 
 
-def _coord_variance(heatmaps, dim, ndims):
+def _coord_variance(heatmaps, dim):
     """Calculate the coordinate variance along an axis.
 
     Args:
@@ -98,26 +96,27 @@ def _coord_variance(heatmaps, dim, ndims):
     Returns:
         The coordinate variance, `Var[X] =  E[(X - E[x])^2]`
     """
+
     # mu_x = E[X]
-    mu_x = _coord_expectation(heatmaps, dim, ndims)
+    mu_x = _coord_expectation(heatmaps, dim)
     # var_x = E[(X - mu_x)^2]
-    var_x = _coord_expectation(heatmaps, dim, ndims, lambda x: (x - mu_x) ** 2)
+    var_x = _coord_expectation(heatmaps, dim, transform=lambda x: (x - mu_x) ** 2)
+
     return var_x
 
 
-def dsnt(heatmaps, ndims=2):
+def dsnt(heatmaps):
     """Differentiable spatial to numerical transform.
 
     Args:
         heatmaps (torch.Tensor): Spatial representation of locations
-        ndims (int): the number of dimensions in a heatmap
 
     Returns:
         Numerical coordinates corresponding to the locations in the heatmaps.
     """
 
-    dim_range = range(-1, -(ndims + 1), -1)
-    mu = torch.stack([_coord_expectation(heatmaps, dim, ndims) for dim in dim_range], -1)
+    dim_range = range(-1, 1 - heatmaps.dim(), -1)
+    mu = torch.stack([_coord_expectation(heatmaps, dim) for dim in dim_range], -1)
     return mu
 
 
@@ -125,12 +124,13 @@ def average_loss(losses, mask=None):
     """Calculate the average of per-location losses.
 
     Args:
-        losses (Tensor): Predictions ([batches x] n)
+        losses (Tensor): Predictions (B x L)
         mask (Tensor, optional): Mask of points to include in the loss calculation
-            ([batches x] n), defaults to including everything
+            (B x L), defaults to including everything
     """
 
     if mask is not None:
+        assert mask.size() == losses.size(), 'mask must be the same size as losses'
         losses = losses * mask
         denom = mask.sum()
     else:
@@ -145,10 +145,11 @@ def average_loss(losses, mask=None):
     return losses.sum() / denom
 
 
-def flat_softmax(inp, ndims=2):
-    """Compute the softmax with the last `ndims` tensor dimensions combined."""
+def flat_softmax(inp):
+    """Compute the softmax with all but the first two tensor dimensions combined."""
+
     orig_size = inp.size()
-    flat = inp.view(-1, reduce(mul, orig_size[-ndims:]))
+    flat = inp.view(-1, reduce(mul, orig_size[2:]))
     flat = torch.nn.functional.softmax(flat)
     return flat.view(*orig_size)
 
@@ -161,9 +162,11 @@ def euclidean_losses(actual, target):
     d=2 (locations are 2D).
 
     Args:
-        actual (Tensor): Predictions ([batches x] n x d)
-        target (Tensor): Ground truth target ([batches x] n x d)
+        actual (Tensor): Predictions (B x L x D)
+        target (Tensor): Ground truth target (B x L x D)
     """
+
+    assert actual.size() == target.size(), 'input tensors must have the same size'
 
     # Calculate Euclidean distances between actual and target locations
     diff = actual - target
@@ -215,15 +218,26 @@ def make_gauss(means, size, sigma, normalize=True):
     return gauss / val_sum
 
 
-def _kl(p, q, ndims, eps=1e-24):
+def _kl(p, q, ndims):
+    eps = 1e-24
     unsummed_kl = p * ((p + eps).log() - (q + eps).log())
     kl_values = reduce(lambda t, _: t.sum(-1, keepdim=False), range(ndims), unsummed_kl)
     return kl_values
 
 
-def _js(p, q, ndims, eps=1e-24):
+def _js(p, q, ndims):
     m = 0.5 * (p + q)
-    return 0.5 * _kl(p, m, ndims, eps) + 0.5 * _kl(q, m, ndims, eps)
+    return 0.5 * _kl(p, m, ndims) + 0.5 * _kl(q, m, ndims)
+
+
+def _divergence_reg_losses(heatmaps, mu_t, sigma_t, divergence):
+    ndims = mu_t.size(-1)
+    assert heatmaps.dim() == ndims + 2, 'expected heatmaps to be a {}D tensor'.format(ndims + 2)
+    assert heatmaps.size()[:-ndims] == mu_t.size()[:-1]
+
+    gauss = make_gauss(mu_t, heatmaps.size()[2:], sigma_t)
+    divergences = divergence(heatmaps, gauss, ndims)
+    return divergences
 
 
 def kl_reg_losses(heatmaps, mu_t, sigma_t):
@@ -238,10 +252,7 @@ def kl_reg_losses(heatmaps, mu_t, sigma_t):
         Per-location KL divergences.
     """
 
-    ndims = mu_t.size(-1)
-    gauss = make_gauss(mu_t, heatmaps.size()[-ndims:], sigma_t)
-    divergences = _kl(heatmaps, gauss, ndims)
-    return divergences
+    return _divergence_reg_losses(heatmaps, mu_t, sigma_t, _kl)
 
 
 def js_reg_losses(heatmaps, mu_t, sigma_t):
@@ -256,13 +267,10 @@ def js_reg_losses(heatmaps, mu_t, sigma_t):
         Per-location JS divergences.
     """
 
-    ndims = mu_t.size(-1)
-    gauss = make_gauss(mu_t, heatmaps.size()[-ndims:], sigma_t)
-    divergences = _js(heatmaps, gauss, ndims)
-    return divergences
+    return _divergence_reg_losses(heatmaps, mu_t, sigma_t, _js)
 
 
-def variance_reg_losses(heatmaps, sigma_t, ndims=2):
+def variance_reg_losses(heatmaps, sigma_t):
     """Calculate the loss between heatmap variances and target variance.
 
     Note that this is slightly different from the version used in the
@@ -272,17 +280,17 @@ def variance_reg_losses(heatmaps, sigma_t, ndims=2):
     Args:
         heatmaps (torch.Tensor): Heatmaps generated by the model
         sigma_t (float): Target standard deviation (in pixels)
-        ndims (int): Number of dimensions in a heatmap
 
     Returns:
         Per-location sum of square errors for variance.
     """
 
-    variance = torch.stack([_coord_variance(heatmaps, d, ndims) for d in range(-ndims, 0)], -1)
-    heatmap_size = _type_as(torch.Tensor(list(heatmaps.size()[-ndims:])), variance)
+    variance = torch.stack(
+        [_coord_variance(heatmaps, d) for d in range(2 - heatmaps.dim(), 0)]
+    , -1)
+    heatmap_size = _type_as(torch.Tensor(list(heatmaps.size()[2:])), variance)
     actual_variance = variance * (heatmap_size / 2) ** 2
     target_variance = sigma_t ** 2
-    diff = (actual_variance - target_variance)
-    sq_error = diff ** 2
+    sq_error = (actual_variance - target_variance) ** 2
 
     return sq_error.sum(-1, keepdim=False)

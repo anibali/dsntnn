@@ -7,7 +7,7 @@ from dsntnn import make_gauss, average_loss, kl_reg_losses, js_reg_losses, varia
 
 def _test_reg_loss(tc, loss_method, uses_mean=True):
     # Target mean and standard deviation
-    target_mean = torch.Tensor([0, 0])
+    target_mean = torch.Tensor([[[0, 0]]])
     target_stddev = 1.0
 
     # Helper function to calculate the loss between the target and a Gaussian heatmap
@@ -43,7 +43,7 @@ class TestKLRegLoss(TestCase):
         _test_reg_loss(self, kl_reg_losses)
 
     def test_mask(self):
-        t = torch.Tensor([
+        t = torch.Tensor([[
             [
                 [0.0, 0.0, 0.0, 0.0],
                 [0.0, 0.0, 0.0, 0.0],
@@ -56,9 +56,9 @@ class TestKLRegLoss(TestCase):
                 [0.0, 0.0, 0.0, 0.0],
                 [0.0, 0.0, 0.0, 0.0],
             ]
-        ])
-        coords = torch.Tensor([[1, 1], [0, 0]])
-        mask = torch.Tensor([1, 0])
+        ]])
+        coords = torch.Tensor([[[1, 1], [0, 0]]])
+        mask = torch.Tensor([[1, 0]])
 
         actual = average_loss(
             kl_reg_losses(Variable(t), Variable(coords), 2.0),
@@ -67,13 +67,15 @@ class TestKLRegLoss(TestCase):
         self.assertEqual(1.2228811717796824, actual.data[0])
 
     def test_rectangular(self):
-        t = torch.Tensor([
-            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-            [0.0, 0.0, 0.0, 0.0, 0.0, 0.1],
-            [0.0, 0.0, 0.0, 0.0, 0.1, 0.8],
-        ])
-        coords = torch.Tensor([[1, 1]])
+        t = torch.Tensor([[
+            [
+                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 0.0, 0.0, 0.1],
+                [0.0, 0.0, 0.0, 0.0, 0.1, 0.8],
+            ]
+        ]])
+        coords = torch.Tensor([[[1, 1]]])
 
         actual = average_loss(kl_reg_losses(Variable(t), Variable(coords), 2.0))
 
@@ -90,46 +92,48 @@ class TestVarianceRegLoss(TestCase):
         _test_reg_loss(self, variance_reg_losses, uses_mean=False)
 
     def test_exact(self):
-        t = torch.Tensor([
+        t = torch.Tensor([[
             [
                 [0.0, 0.0, 0.0, 0.0],
                 [0.0, 0.0, 0.1, 0.0],
                 [0.0, 0.1, 0.6, 0.1],
                 [0.0, 0.0, 0.1, 0.0],
             ]
-        ])
+        ]])
 
         actual = average_loss(variance_reg_losses(Variable(t), 2.0))
         self.assertEqual(28.88, actual.data[0])
 
     def test_rectangular(self):
-        t = torch.Tensor([
+        t = torch.Tensor([[
             [
                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                 [0.0, 0.0, 0.1, 0.0, 0.0, 0.0],
                 [0.0, 0.1, 0.6, 0.1, 0.0, 0.0],
                 [0.0, 0.0, 0.1, 0.0, 0.0, 0.0],
             ]
-        ])
+        ]])
 
         actual = average_loss(variance_reg_losses(Variable(t), 2.0))
         self.assertEqual(28.88, actual.data[0])
 
     def test_3d(self):
-        t = torch.Tensor([[[
-            [0.000035, 0.000002, 0.000000],
-            [0.009165, 0.000570, 0.000002],
-            [0.147403, 0.009165, 0.000035],
-        ], [
-            [0.000142, 0.000009, 0.000000],
-            [0.036755, 0.002285, 0.000009],
-            [0.591145, 0.036755, 0.000142],
-        ], [
-            [0.000035, 0.000002, 0.000000],
-            [0.009165, 0.000570, 0.000002],
-            [0.147403, 0.009165, 0.000035],
-        ]]])
-        actual = average_loss(variance_reg_losses(Variable(t), 0.6, ndims=3))
+        t = torch.Tensor([[
+            [[
+                [0.000035, 0.000002, 0.000000],
+                [0.009165, 0.000570, 0.000002],
+                [0.147403, 0.009165, 0.000035],
+            ], [
+                [0.000142, 0.000009, 0.000000],
+                [0.036755, 0.002285, 0.000009],
+                [0.591145, 0.036755, 0.000142],
+            ], [
+                [0.000035, 0.000002, 0.000000],
+                [0.009165, 0.000570, 0.000002],
+                [0.147403, 0.009165, 0.000035],
+            ]]
+        ]])
+        actual = average_loss(variance_reg_losses(Variable(t), 0.6))
         self.assertEqual(0.18564102213775013, actual.data[0])
 
     def test_batch(self):

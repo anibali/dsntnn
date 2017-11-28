@@ -30,8 +30,7 @@ The following variables are used when denoting tensor sizes.
 * `H` — height
 * `W` — width
 
-Optional dimensions are denoted with square brackets (e.g. `[B] x L` denotes an optional
-first dimension).
+Unbatched operations are not supported.
 
 ## Heatmap normalization
 
@@ -70,8 +69,8 @@ with standard deviation `sigma_t` and means `mu_t`.
 
 Arguments
 
-* `heatmaps ([B] x L x H x W tensor)` — the predicted heatmaps
-* `mu_t ([B] x L x D tensor)` — the ground truth location coordinates, in normalized units
+* `heatmaps (B x L x H x W tensor)` — the predicted heatmaps
+* `mu_t (B x L x D tensor)` — the ground truth location coordinates, in normalized units
 * `sigma_t (float)` — the target standard deviation, in pixels
 
 ### Variance regularization
@@ -88,7 +87,7 @@ will be larger by a constant factor based on the size of the heatmap.
 
 Arguments
 
-* `heatmaps ([B] x L x H x W tensor)` — the predicted heatmaps
+* `heatmaps (B x L x H x W tensor)` — the predicted heatmaps
 * `sigma_t (float)` — the target standard deviation, in pixels
 
 ## Utility
@@ -106,8 +105,8 @@ dsntnn.average_loss(losses, mask=None)
 
 Arguments
 
-* `losses ([B] x L tensor)` — per-location losses
-* `mask ([B] x L tensor, optional)` — binary mask of included locations
+* `losses (B x L tensor)` — per-location losses
+* `mask (B x L tensor, optional)` — binary mask of included locations
 
 Returns
 

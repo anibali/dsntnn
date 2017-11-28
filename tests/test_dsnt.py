@@ -48,22 +48,6 @@ class TestDSNT(TestCase):
         actual = in_var.grad.data
         self.assertEqual(actual, expected)
 
-    def test_batchless(self):
-        mse = torch.nn.MSELoss()
-
-        in_var = Variable(self.SIMPLE_INPUT.squeeze(0), requires_grad=True)
-
-        expected_output = self.SIMPLE_OUTPUT.squeeze(0)
-        output = dsnt(in_var)
-        self.assertEqual(output.data, expected_output)
-
-        target_var = Variable(self.SIMPLE_TARGET.squeeze(0), requires_grad=False)
-        loss = mse(output, target_var)
-        loss.backward()
-
-        expected_grad = self.SIMPLE_GRAD_INPUT.squeeze(0)
-        self.assertEqual(in_var.grad.data, expected_grad)
-
     def test_cuda(self):
         mse = torch.nn.MSELoss()
 
@@ -82,18 +66,20 @@ class TestDSNT(TestCase):
 
     def test_3d(self):
         inp = torch.Tensor([[
-            [0.00, 0.00, 0.00],
-            [0.00, 0.00, 0.00],
-            [0.00, 0.00, 0.00],
-        ], [
-            [0.00, 0.00, 0.00],
-            [0.00, 0.00, 0.00],
-            [1.00, 0.00, 0.00],
-        ], [
-            [0.00, 0.00, 0.00],
-            [0.00, 0.00, 0.00],
-            [0.00, 0.00, 0.00],
+            [[
+                [0.00, 0.00, 0.00],
+                [0.00, 0.00, 0.00],
+                [0.00, 0.00, 0.00],
+            ], [
+                [0.00, 0.00, 0.00],
+                [0.00, 0.00, 0.00],
+                [1.00, 0.00, 0.00],
+            ], [
+                [0.00, 0.00, 0.00],
+                [0.00, 0.00, 0.00],
+                [0.00, 0.00, 0.00],
+            ]]
         ]])
 
-        expected = torch.Tensor([[-2/3, 2/3, 0]])
-        self.assertEqual(dsnt(inp, ndims=3), expected)
+        expected = torch.Tensor([[[-2/3, 2/3, 0]]])
+        self.assertEqual(dsnt(inp), expected)

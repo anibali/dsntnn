@@ -90,7 +90,7 @@ raccoon_face_tensor = torch.from_numpy(raccoon_face).permute(2, 0, 1).float()
 input_tensor = raccoon_face_tensor.div(255).unsqueeze(0)
 input_var = Variable(input_tensor, requires_grad=False).cuda()
 
-eye_coords_tensor = torch.FloatTensor([[eye_x, eye_y]])
+eye_coords_tensor = torch.FloatTensor([[[eye_x, eye_y]]])
 target_tensor = eye_coords_tensor.div(40 / 2).sub(1)
 target_var = Variable(target_tensor, requires_grad=False).cuda()
 
