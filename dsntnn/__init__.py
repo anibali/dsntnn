@@ -150,7 +150,7 @@ def flat_softmax(inp):
 
     orig_size = inp.size()
     flat = inp.view(-1, reduce(mul, orig_size[2:]))
-    flat = torch.nn.functional.softmax(flat)
+    flat = torch.nn.functional.softmax(flat, -1)
     return flat.view(*orig_size)
 
 
