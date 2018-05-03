@@ -22,6 +22,12 @@ $ python3 setup.py examples
 HTML reports will be saved in the `examples/` directory. Please note that the `dsntnn` package must
 be installed with `pip install` for the examples to run correctly.
 
+### Building documentation
+
+```bash
+$ mkdocs build
+```
+
 ### Running tests
 
 ```bash
@@ -52,7 +58,10 @@ This project is open source under the terms of the
 If you use any part of this work in a research project, please cite the following paper:
 
 ```bibtex
-@misc{
-  title="Check back here later"
+@article{nibali2018numerical,
+  title={Numerical Coordinate Regression with Convolutional Neural Networks},
+  author={Nibali, Aiden and He, Zhen and Morgan, Stuart and Prendergast, Luke},
+  journal={arXiv preprint arXiv:1801.07372},
+  year={2018}
 }
 ```
