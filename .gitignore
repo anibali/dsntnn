@@ -21,6 +21,8 @@ core
 # setup.py outputs
 /*.egg-info/
 /.eggs/
+/build/
+/dist/
 
 # mkdocs outputs
 /site
