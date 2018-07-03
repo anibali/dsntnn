@@ -1,5 +1,6 @@
 from setuptools import setup, Command
 from subprocess import call
+from os import path
 import glob
 
 
@@ -37,11 +38,17 @@ class ExamplesCommand(Command):
             pweave.weave(example_file, doctype='md2html')
 
 
+with open('README.md') as f:
+    long_description = f.read()
+
+
 setup(
     name='dsntnn',
-    version='0.1.0',
+    version='0.3.0',
     author='Aiden Nibali',
     description='PyTorch implementation of DSNT',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     license='Apache Software License 2.0',
     packages=['dsntnn'],
     test_suite='tests',
