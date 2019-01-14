@@ -35,7 +35,7 @@ class TestMakeGauss(TestCase):
 
     def test_unnormalized(self):
         actual = make_gauss(torch.Tensor([0, 0]), [5, 5], sigma=1.0, normalize=False)
-        self.assertEqual(1.0, actual.max())
+        self.assertEqual(1.0, actual.max().item())
 
     def test_rectangular(self):
         expected = torch.Tensor([

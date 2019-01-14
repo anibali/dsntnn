@@ -19,7 +19,7 @@ class TestEuclideanLoss(TestCase):
 
         in_var = Variable(input_tensor, requires_grad=True)
 
-        expected_loss = torch.Tensor([5])
+        expected_loss = 5.0
         actual_loss = average_loss(euclidean_losses(in_var, Variable(target)))
         expected_grad = torch.Tensor([
             [[0.15, 0.20], [0.15, 0.20]],
@@ -28,7 +28,7 @@ class TestEuclideanLoss(TestCase):
         actual_loss.backward()
         actual_grad = in_var.grad.data
 
-        self.assertEqual(expected_loss, actual_loss.data)
+        self.assertEqual(expected_loss, actual_loss.item())
         self.assertEqual(expected_grad, actual_grad)
 
     def test_mask(self):
@@ -47,9 +47,9 @@ class TestEuclideanLoss(TestCase):
             [0, 1, 1],
         ])
 
-        expected = torch.Tensor([0])
+        expected = 0.0
         actual = average_loss(
             euclidean_losses(Variable(output), Variable(target)),
             Variable(mask))
 
-        self.assertEqual(expected, actual.data)
+        self.assertEqual(expected, actual.item())

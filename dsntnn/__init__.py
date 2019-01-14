@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """
-Differentiable DSNT operations for use in PyTorch computation graphs.
+DSNT (soft-argmax) operations for use in PyTorch computation graphs.
 """
 
 from functools import reduce
@@ -21,20 +21,23 @@ from operator import mul
 
 import torch
 import torch.nn.functional
-from torch.autograd import Variable
 
 
-def _type_as(tensor, other, requires_grad=False):
-    """Type a tensor to match the type of another object.
+def linear_expectation(probs, values):
+    assert(len(values) == probs.ndimension() - 2)
+    expectation = []
+    for i in range(2, probs.ndimension()):
+        # Marginalise probabilities
+        marg = probs
+        for j in range(probs.ndimension() - 1, 1, -1):
+            if i != j:
+                marg = marg.sum(j, keepdim=False)
+        # Calculate expectation along axis `i`
+        expectation.append((marg * values[len(expectation)]).sum(-1, keepdim=False))
+    return torch.stack(expectation, -1)
 
-    If `other` is a Variable, `tensor` will be wrapped in a Variable also.
-    """
-    if isinstance(other, Variable):
-        tensor = Variable(tensor, requires_grad=requires_grad)
-    return tensor.type_as(other)
 
-
-def _normalized_linspace(length, type_as):
+def normalized_linspace(length, dtype=None, device=None):
     """Generate a vector with values ranging from -1 to 1.
 
     Note that the values correspond to the "centre" of each cell, so
@@ -49,60 +52,19 @@ def _normalized_linspace(length, type_as):
 
     Args:
         length: The length of the vector
-        type_as: An object to type the vector as
 
     Returns:
         The generated vector
     """
     first = -(length - 1) / length
     last = (length - 1) / length
-    vec = torch.linspace(first, last, length)
-    return _type_as(vec, type_as)
+    return torch.linspace(first, last, length, dtype=dtype, device=device)
 
 
-def _coord_expectation(heatmaps, dim, transform=None):
-    """Calculate the coordinate expected value along an axis.
-
-    Args:
-        heatmaps: Normalized heatmaps (probabilities)
-        dim: Dimension of the coordinate axis
-        transform: Coordinate transformation function, defaults to identity
-
-    Returns:
-        The coordinate expected value, `E[transform(X)]`
-    """
-
-    dim_size = heatmaps.size()[dim]
-    own_coords = _normalized_linspace(dim_size, type_as=heatmaps)
-    if transform:
-        own_coords = transform(own_coords)
-    summed = heatmaps.view(-1, *heatmaps.size()[2:])
-    for i in range(2 - heatmaps.dim(), 0):
-        if i != dim:
-            summed = summed.sum(i, keepdim=True)
-    summed = summed.view(summed.size(0), -1)
-    expectations = summed.mul(own_coords.view(-1, own_coords.size(-1))).sum(-1)
-    expectations = expectations.view(*heatmaps.size()[:2])
-    return expectations
-
-
-def _coord_variance(heatmaps, dim):
-    """Calculate the coordinate variance along an axis.
-
-    Args:
-        heatmaps: Normalized heatmaps (probabilities)
-        dim: Dimension of the coordinate axis
-
-    Returns:
-        The coordinate variance, `Var[X] =  E[(X - E[x])^2]`
-    """
-
-    # mu_x = E[X]
-    mu_x = _coord_expectation(heatmaps, dim)
-    # var_x = E[(X - mu_x)^2]
-    var_x = _coord_expectation(heatmaps, dim, transform=lambda x: (x - mu_x) ** 2)
-
-    return var_x
+def soft_argmax(heatmaps):
+    values = [normalized_linspace(d, dtype=heatmaps.dtype, device=heatmaps.device)
+              for d in heatmaps.size()[2:]]
+    return linear_expectation(heatmaps, values).flip(-1)
 
 
 def dsnt(heatmaps):
@@ -114,35 +76,7 @@ def dsnt(heatmaps):
     Returns:
         Numerical coordinates corresponding to the locations in the heatmaps.
     """
-
-    dim_range = range(-1, 1 - heatmaps.dim(), -1)
-    mu = torch.stack([_coord_expectation(heatmaps, dim) for dim in dim_range], -1)
-    return mu
-
-
-def average_loss(losses, mask=None):
-    """Calculate the average of per-location losses.
-
-    Args:
-        losses (Tensor): Predictions (B x L)
-        mask (Tensor, optional): Mask of points to include in the loss calculation
-            (B x L), defaults to including everything
-    """
-
-    if mask is not None:
-        assert mask.size() == losses.size(), 'mask must be the same size as losses'
-        losses = losses * mask
-        denom = mask.sum()
-    else:
-        denom = losses.numel()
-
-    # Prevent division by zero
-    if isinstance(denom, int):
-        denom = max(denom, 1)
-    else:
-        denom = denom.clamp(1)
-
-    return losses.sum() / denom
+    return soft_argmax(heatmaps)
 
 
 def flat_softmax(inp):
@@ -191,7 +125,8 @@ def make_gauss(means, size, sigma, normalize=True):
     """
 
     dim_range = range(-1, -(len(size) + 1), -1)
-    coords_list = [_normalized_linspace(s, type_as=means) for s in reversed(size)]
+    coords_list = [normalized_linspace(s, dtype=means.dtype, device=means.device)
+                   for s in reversed(size)]
 
     # PDF = exp(-(x - \mu)^2 / (2 \sigma^2))
 
@@ -216,6 +151,31 @@ def make_gauss(means, size, sigma, normalize=True):
     # Normalize the Gaussians
     val_sum = reduce(lambda t, dim: t.sum(dim, keepdim=True), dim_range, gauss) + 1e-24
     return gauss / val_sum
+
+
+def average_loss(losses, mask=None):
+    """Calculate the average of per-location losses.
+
+    Args:
+        losses (Tensor): Predictions (B x L)
+        mask (Tensor, optional): Mask of points to include in the loss calculation
+            (B x L), defaults to including everything
+    """
+
+    if mask is not None:
+        assert mask.size() == losses.size(), 'mask must be the same size as losses'
+        losses = losses * mask
+        denom = mask.sum()
+    else:
+        denom = losses.numel()
+
+    # Prevent division by zero
+    if isinstance(denom, int):
+        denom = max(denom, 1)
+    else:
+        denom = denom.clamp(1)
+
+    return losses.sum() / denom
 
 
 def _kl(p, q, ndims):
@@ -285,11 +245,17 @@ def variance_reg_losses(heatmaps, sigma_t):
         Per-location sum of square errors for variance.
     """
 
-    variance = torch.stack(
-        [_coord_variance(heatmaps, d) for d in range(2 - heatmaps.dim(), 0)]
-    , -1)
-    heatmap_size = _type_as(torch.Tensor(list(heatmaps.size()[2:])), variance)
-    actual_variance = variance * (heatmap_size / 2) ** 2
+    # mu = E[X]
+    values = [normalized_linspace(d, dtype=heatmaps.dtype, device=heatmaps.device)
+              for d in heatmaps.size()[2:]]
+    mu = linear_expectation(heatmaps, values)
+    # var = E[(X - mu)^2]
+    values = [(a - b.squeeze(0)) ** 2 for a, b in zip(values, mu.split(1, -1))]
+    var = linear_expectation(heatmaps, values)
+
+
+    heatmap_size = torch.tensor(list(heatmaps.size()[2:]), dtype=var.dtype, device=var.device)
+    actual_variance = var * (heatmap_size / 2) ** 2
     target_variance = sigma_t ** 2
     sq_error = (actual_variance - target_variance) ** 2
 

@@ -2,7 +2,7 @@ import torch
 from torch.autograd import Variable
 from tests.common import TestCase
 
-from dsntnn import dsnt
+from dsntnn import dsnt, linear_expectation
 
 
 class TestDSNT(TestCase):
@@ -83,3 +83,16 @@ class TestDSNT(TestCase):
 
         expected = torch.Tensor([[[-2/3, 2/3, 0]]])
         self.assertEqual(dsnt(inp), expected)
+
+    def test_linear_expectation(self):
+        probs = torch.Tensor([[[
+            [0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.2, 0.3, 0.0],
+            [0.0, 0.0, 0.3, 0.2, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0],
+        ]]])
+        values = [torch.arange(d, dtype=probs.dtype, device=probs.device) for d in probs.size()[2:]]
+
+        expected = torch.Tensor([[[1.5, 2.5]]])
+        actual = linear_expectation(probs, values)
+        self.assertEqual(actual, expected)
