@@ -1,5 +1,4 @@
 import torch
-from torch.autograd import Variable
 from tests.common import TestCase
 
 from dsntnn import dsnt, linear_expectation
@@ -28,41 +27,36 @@ class TestDSNT(TestCase):
     ]]])
 
     def test_forward(self):
-        in_var = Variable(self.SIMPLE_INPUT, requires_grad=False)
-
         expected = self.SIMPLE_OUTPUT
-        actual = dsnt(in_var)
-        self.assertEqual(actual.data, expected)
+        actual = dsnt(self.SIMPLE_INPUT)
+        self.assertEqual(actual, expected)
 
     def test_backward(self):
         mse = torch.nn.MSELoss()
 
-        in_var = Variable(self.SIMPLE_INPUT, requires_grad=True)
+        in_var = self.SIMPLE_INPUT.detach().requires_grad_(True)
         output = dsnt(in_var)
 
-        target_var = Variable(self.SIMPLE_TARGET, requires_grad=False)
-        loss = mse(output, target_var)
+        loss = mse(output, self.SIMPLE_TARGET)
         loss.backward()
 
-        expected = self.SIMPLE_GRAD_INPUT
-        actual = in_var.grad.data
-        self.assertEqual(actual, expected)
+        self.assertEqual(in_var.grad, self.SIMPLE_GRAD_INPUT)
 
     def test_cuda(self):
         mse = torch.nn.MSELoss()
 
-        in_var = Variable(self.SIMPLE_INPUT.cuda(), requires_grad=True)
+        in_var = self.SIMPLE_INPUT.detach().cuda().requires_grad_(True)
 
         expected_output = self.SIMPLE_OUTPUT.cuda()
         output = dsnt(in_var)
-        self.assertEqual(output.data, expected_output)
+        self.assertEqual(output, expected_output)
 
-        target_var = Variable(self.SIMPLE_TARGET.cuda(), requires_grad=False)
+        target_var = self.SIMPLE_TARGET.cuda()
         loss = mse(output, target_var)
         loss.backward()
 
         expected_grad = self.SIMPLE_GRAD_INPUT.cuda()
-        self.assertEqual(in_var.grad.data, expected_grad)
+        self.assertEqual(in_var.grad, expected_grad)
 
     def test_3d(self):
         inp = torch.Tensor([[

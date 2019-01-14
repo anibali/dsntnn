@@ -1,5 +1,4 @@
 import torch
-from torch.autograd import Variable
 from tests.common import TestCase
 
 from dsntnn import make_gauss, average_loss, kl_reg_losses, js_reg_losses, variance_reg_losses
@@ -60,9 +59,7 @@ class TestKLRegLoss(TestCase):
         coords = torch.Tensor([[[1, 1], [0, 0]]])
         mask = torch.Tensor([[1, 0]])
 
-        actual = average_loss(
-            kl_reg_losses(Variable(t), Variable(coords), 2.0),
-            Variable(mask))
+        actual = average_loss(kl_reg_losses(t, coords, 2.0), mask)
 
         self.assertEqual(1.2228811717796824, actual.item())
 
@@ -77,7 +74,7 @@ class TestKLRegLoss(TestCase):
         ]])
         coords = torch.Tensor([[[1, 1]]])
 
-        actual = average_loss(kl_reg_losses(Variable(t), Variable(coords), 2.0))
+        actual = average_loss(kl_reg_losses(t, coords, 2.0))
 
         self.assertEqual(1.2646753877545842, actual.item())
 
@@ -101,7 +98,7 @@ class TestVarianceRegLoss(TestCase):
             ]
         ]])
 
-        actual = average_loss(variance_reg_losses(Variable(t), 2.0))
+        actual = average_loss(variance_reg_losses(t, 2.0))
         self.assertEqual(28.88, actual.item())
 
     def test_rectangular(self):
@@ -114,7 +111,7 @@ class TestVarianceRegLoss(TestCase):
             ]
         ]])
 
-        actual = average_loss(variance_reg_losses(Variable(t), 2.0))
+        actual = average_loss(variance_reg_losses(t, 2.0))
         self.assertEqual(28.88, actual.item())
 
     def test_3d(self):
@@ -133,7 +130,7 @@ class TestVarianceRegLoss(TestCase):
                 [0.147403, 0.009165, 0.000035],
             ]]
         ]])
-        actual = average_loss(variance_reg_losses(Variable(t), 0.6))
+        actual = average_loss(variance_reg_losses(t, 0.6))
         self.assertEqual(0.18564102213775013, actual.item())
 
     def test_batch(self):
@@ -152,5 +149,5 @@ class TestVarianceRegLoss(TestCase):
             ]]
         ])
 
-        actual = average_loss(variance_reg_losses(Variable(t), 2.0))
+        actual = average_loss(variance_reg_losses(t, 2.0))
         self.assertEqual(28.54205, actual.item())
