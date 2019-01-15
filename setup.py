@@ -44,7 +44,7 @@ with open('README.md') as f:
 
 setup(
     name='dsntnn',
-    version='0.4.0a0',
+    version='0.4.0',
     author='Aiden Nibali',
     description='PyTorch implementation of DSNT',
     long_description=long_description,
@@ -57,7 +57,7 @@ setup(
         'examples': ExamplesCommand,
     },
     install_requires=[
-        'torch',
+        'torch>=0.4',
     ],
     classifiers=[
         'Intended Audience :: Developers',
