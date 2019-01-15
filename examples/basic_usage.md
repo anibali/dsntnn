@@ -64,7 +64,6 @@ class CoordRegressionNetwork(nn.Module):
 
 ```python
 from torch import optim
-from torch.autograd import Variable
 import matplotlib.pyplot as plt
 import scipy.misc
 ```
@@ -89,11 +88,11 @@ The DSNT layer always outputs coordinates in this range.
 ```python
 raccoon_face_tensor = torch.from_numpy(raccoon_face).permute(2, 0, 1).float()
 input_tensor = raccoon_face_tensor.div(255).unsqueeze(0)
-input_var = Variable(input_tensor, requires_grad=False).cuda()
+input_var = input_tensor.cuda()
 
 eye_coords_tensor = torch.Tensor([[[eye_x, eye_y]]])
 target_tensor = (eye_coords_tensor * 2 + 1) / torch.Tensor(image_size) - 1
-target_var = Variable(target_tensor, requires_grad=False).cuda()
+target_var = target_tensor.cuda()
 
 print('Target: {:0.4f}, {:0.4f}'.format(*list(target_tensor.squeeze())))
 ```
@@ -112,8 +111,8 @@ The results aren't very good yet since the model is completely untrained.
 ```python
 coords, heatmaps = model(input_var)
 
-print('Initial prediction: {:0.4f}, {:0.4f}'.format(*list(coords.data[0, 0])))
-plt.imshow(heatmaps[0, 0].data.cpu().numpy())
+print('Initial prediction: {:0.4f}, {:0.4f}'.format(*list(coords[0, 0])))
+plt.imshow(heatmaps[0, 0].detach().cpu().numpy())
 plt.show()
 ```
 
@@ -143,7 +142,7 @@ for i in range(400):
     optimizer.step()
 
 # Predictions after training
-print('Predicted coords: {:0.4f}, {:0.4f}'.format(*list(coords.data[0, 0])))
-plt.imshow(heatmaps[0, 0].data.cpu().numpy())
+print('Predicted coords: {:0.4f}, {:0.4f}'.format(*list(coords[0, 0])))
+plt.imshow(heatmaps[0, 0].detach().cpu().numpy())
 plt.show()
 ```

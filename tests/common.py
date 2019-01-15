@@ -8,7 +8,6 @@ import unittest
 
 import torch
 import torch.cuda
-from torch.autograd import Variable
 
 
 torch.set_default_tensor_type('torch.DoubleTensor')
@@ -16,9 +15,6 @@ SEED = 0
 
 
 def print_matrix(tensor):
-    if isinstance(tensor, Variable):
-        tensor = tensor.data
-
     assert(tensor.dim() >= 2)
 
     if tensor.dim() > 2:
@@ -76,18 +72,9 @@ class TestCase(unittest.TestCase):
 
         return tg
 
-    def unwrapVariables(self, x, y):
-        if isinstance(x, Variable) and isinstance(y, Variable):
-            return x.data, y.data
-        elif isinstance(x, Variable) or isinstance(y, Variable):
-            raise AssertionError("cannot compare {} and {}".format(type(x), type(y)))
-        return x, y
-
     def assertEqual(self, x, y, prec=None, message=''):
         if prec is None:
             prec = self.precision
-
-        x, y = self.unwrapVariables(x, y)
 
         if torch.is_tensor(x) and torch.is_tensor(y):
             def assertTensorsEqual(a, b):
@@ -130,8 +117,6 @@ class TestCase(unittest.TestCase):
     def assertNotEqual(self, x, y, prec=None, message=''):
         if prec is None:
             prec = self.precision
-
-        x, y = self.unwrapVariables(x, y)
 
         if torch.is_tensor(x) and torch.is_tensor(y):
             if x.size() != y.size():
