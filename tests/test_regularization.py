@@ -1,10 +1,10 @@
 import torch
-from tests.common import TestCase
+from pytest import approx
 
 from dsntnn import make_gauss, average_loss, kl_reg_losses, js_reg_losses, variance_reg_losses
 
 
-def _test_reg_loss(tc, loss_method, uses_mean=True):
+def _test_reg_loss(loss_method, uses_mean=True):
     # Target mean and standard deviation
     target_mean = torch.Tensor([[[0, 0]]])
     target_stddev = 1.0
@@ -23,131 +23,134 @@ def _test_reg_loss(tc, loss_method, uses_mean=True):
     min_loss = calc_loss(target_mean, target_stddev)
 
     # Minimum loss should be close to zero
-    tc.assertEqual(min_loss, 0, 1e-3)
+    assert min_loss == approx(0, abs=1e-6)
 
     # Loss should increase if the heatmap has a larger or smaller standard deviation than
     # the target
-    tc.assertGreater(calc_loss(target_mean, target_stddev + 0.2), min_loss + 1e-3)
-    tc.assertGreater(calc_loss(target_mean, target_stddev - 0.2), min_loss + 1e-3)
+    assert calc_loss(target_mean, target_stddev + 0.2) > min_loss + 1e-3
+    assert calc_loss(target_mean, target_stddev - 0.2) > min_loss + 1e-3
 
     if uses_mean:
         # Loss should increase if the heatmap has its mean location at a different
         # position than the target
-        tc.assertGreater(calc_loss(target_mean + 0.1, target_stddev), min_loss + 1e-3)
-        tc.assertGreater(calc_loss(target_mean - 0.1, target_stddev), min_loss + 1e-3)
+        assert calc_loss(target_mean + 0.1, target_stddev) > min_loss + 1e-3
+        assert calc_loss(target_mean - 0.1, target_stddev) > min_loss + 1e-3
 
 
-class TestKLRegLoss(TestCase):
-    def test_kl_reg_loss(self):
-        _test_reg_loss(self, kl_reg_losses)
-
-    def test_mask(self):
-        t = torch.Tensor([[
-            [
-                [0.0, 0.0, 0.0, 0.0],
-                [0.0, 0.0, 0.0, 0.0],
-                [0.0, 0.0, 0.0, 0.1],
-                [0.0, 0.0, 0.1, 0.8],
-            ],
-            [
-                [0.8, 0.1, 0.0, 0.0],
-                [0.1, 0.0, 0.0, 0.0],
-                [0.0, 0.0, 0.0, 0.0],
-                [0.0, 0.0, 0.0, 0.0],
-            ]
-        ]])
-        coords = torch.Tensor([[[1, 1], [0, 0]]])
-        mask = torch.Tensor([[1, 0]])
-
-        actual = average_loss(kl_reg_losses(t, coords, 2.0), mask)
-
-        self.assertEqual(1.2228811717796824, actual.item())
-
-    def test_rectangular(self):
-        t = torch.Tensor([[
-            [
-                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                [0.0, 0.0, 0.0, 0.0, 0.0, 0.1],
-                [0.0, 0.0, 0.0, 0.0, 0.1, 0.8],
-            ]
-        ]])
-        coords = torch.Tensor([[[1, 1]]])
-
-        actual = average_loss(kl_reg_losses(t, coords, 2.0))
-
-        self.assertEqual(1.2646753877545842, actual.item())
+def test_kl_reg_loss():
+    _test_reg_loss(kl_reg_losses)
 
 
-class TestJSRegLoss(TestCase):
-    def test_js_reg_loss(self):
-        _test_reg_loss(self, js_reg_losses)
+def test_kl_mask():
+    t = torch.Tensor([[
+        [
+            [0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.1],
+            [0.0, 0.0, 0.1, 0.8],
+        ],
+        [
+            [0.8, 0.1, 0.0, 0.0],
+            [0.1, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0],
+        ]
+    ]])
+    coords = torch.Tensor([[[1, 1], [0, 0]]])
+    mask = torch.Tensor([[1, 0]])
+
+    actual = average_loss(kl_reg_losses(t, coords, 2.0), mask)
+
+    assert actual.item() == approx(1.2228811717796824)
 
 
-class TestVarianceRegLoss(TestCase):
-    def test_variance_reg_loss(self):
-        _test_reg_loss(self, variance_reg_losses, uses_mean=False)
+def test_kl_rectangular():
+    t = torch.Tensor([[
+        [
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.1],
+            [0.0, 0.0, 0.0, 0.0, 0.1, 0.8],
+        ]
+    ]])
+    coords = torch.Tensor([[[1, 1]]])
 
-    def test_exact(self):
-        t = torch.Tensor([[
-            [
-                [0.0, 0.0, 0.0, 0.0],
-                [0.0, 0.0, 0.1, 0.0],
-                [0.0, 0.1, 0.6, 0.1],
-                [0.0, 0.0, 0.1, 0.0],
-            ]
-        ]])
+    actual = average_loss(kl_reg_losses(t, coords, 2.0))
 
-        actual = average_loss(variance_reg_losses(t, 2.0))
-        self.assertEqual(28.88, actual.item())
+    assert actual.item() == 1.2646753877545842
 
-    def test_rectangular(self):
-        t = torch.Tensor([[
-            [
-                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                [0.0, 0.0, 0.1, 0.0, 0.0, 0.0],
-                [0.0, 0.1, 0.6, 0.1, 0.0, 0.0],
-                [0.0, 0.0, 0.1, 0.0, 0.0, 0.0],
-            ]
-        ]])
 
-        actual = average_loss(variance_reg_losses(t, 2.0))
-        self.assertEqual(28.88, actual.item())
+def test_js_reg_loss():
+    _test_reg_loss(js_reg_losses)
 
-    def test_3d(self):
-        t = torch.Tensor([[
-            [[
-                [0.000035, 0.000002, 0.000000],
-                [0.009165, 0.000570, 0.000002],
-                [0.147403, 0.009165, 0.000035],
-            ], [
-                [0.000142, 0.000009, 0.000000],
-                [0.036755, 0.002285, 0.000009],
-                [0.591145, 0.036755, 0.000142],
-            ], [
-                [0.000035, 0.000002, 0.000000],
-                [0.009165, 0.000570, 0.000002],
-                [0.147403, 0.009165, 0.000035],
-            ]]
-        ]])
-        actual = average_loss(variance_reg_losses(t, 0.6))
-        self.assertEqual(0.18564102213775013, actual.item())
 
-    def test_batch(self):
-        t = torch.Tensor([
-            [[
-                [0.0, 0.0, 0.0, 0.0],
-                [0.0, 0.0, 0.1, 0.0],
-                [0.0, 0.1, 0.6, 0.1],
-                [0.0, 0.0, 0.1, 0.0],
-            ]],
-            [[
-                [0.0, 0.0, 0.0, 0.0],
-                [0.0, 0.2, 0.0, 0.0],
-                [0.1, 0.5, 0.1, 0.0],
-                [0.0, 0.1, 0.0, 0.0],
-            ]]
-        ])
+def test_variance_reg_loss():
+    _test_reg_loss(variance_reg_losses, uses_mean=False)
 
-        actual = average_loss(variance_reg_losses(t, 2.0))
-        self.assertEqual(28.54205, actual.item())
+
+def test_variance_exact():
+    t = torch.Tensor([[
+        [
+            [0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.1, 0.0],
+            [0.0, 0.1, 0.6, 0.1],
+            [0.0, 0.0, 0.1, 0.0],
+        ]
+    ]])
+
+    actual = average_loss(variance_reg_losses(t, 2.0))
+    assert actual.item() == 28.88
+
+
+def test_variance_rectangular():
+    t = torch.Tensor([[
+        [
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.1, 0.0, 0.0, 0.0],
+            [0.0, 0.1, 0.6, 0.1, 0.0, 0.0],
+            [0.0, 0.0, 0.1, 0.0, 0.0, 0.0],
+        ]
+    ]])
+
+    actual = average_loss(variance_reg_losses(t, 2.0))
+    assert actual.item() == 28.88
+
+
+def test_variance_3d():
+    t = torch.Tensor([[
+        [[
+            [0.000035, 0.000002, 0.000000],
+            [0.009165, 0.000570, 0.000002],
+            [0.147403, 0.009165, 0.000035],
+        ], [
+            [0.000142, 0.000009, 0.000000],
+            [0.036755, 0.002285, 0.000009],
+            [0.591145, 0.036755, 0.000142],
+        ], [
+            [0.000035, 0.000002, 0.000000],
+            [0.009165, 0.000570, 0.000002],
+            [0.147403, 0.009165, 0.000035],
+        ]]
+    ]])
+    actual = average_loss(variance_reg_losses(t, 0.6))
+    assert actual.item() == approx(0.18564102213775013)
+
+
+def test_variance_batch():
+    t = torch.Tensor([
+        [[
+            [0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.1, 0.0],
+            [0.0, 0.1, 0.6, 0.1],
+            [0.0, 0.0, 0.1, 0.0],
+        ]],
+        [[
+            [0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.2, 0.0, 0.0],
+            [0.1, 0.5, 0.1, 0.0],
+            [0.0, 0.1, 0.0, 0.0],
+        ]]
+    ])
+
+    actual = average_loss(variance_reg_losses(t, 2.0))
+    assert actual.item() == approx(28.54205)

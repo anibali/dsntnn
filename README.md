@@ -30,9 +30,11 @@ $ mkdocs build
 
 ### Running tests
 
+Note: The dsntnn package must be installed before running tests.
+
 ```bash
-$ python3 setup.py test     # Run tests
-$ python3 setup.py coverage # Run tests with code coverage
+$ pytest                                 # Run tests.
+$ pytest --cov=dsntnn --cov-report=html  # Run tests and generate a code coverage report.
 ```
 
 ## Other implementations

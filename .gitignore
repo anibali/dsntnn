@@ -30,3 +30,6 @@ core
 # IDE configuration
 .vscode
 .idea
+
+# Hypothesis files
+.hypothesis/

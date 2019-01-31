@@ -3,7 +3,9 @@ torch==1.0.0
 # Development dependencies
 mkdocs==0.17.2
 pymdown-extensions==4.3
-coverage==4.4.2
 Pweave==0.30.1
 numpy==1.14.6
 scipy==0.19.1
+hypothesis==4.4.3
+pytest==3.8.2
+pytest-cov=2.6.1
