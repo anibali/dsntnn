@@ -40,6 +40,8 @@ $ pytest --cov=dsntnn --cov-report=html  # Run tests and generate a code coverag
 ## Other implementations
 
 * Tensorflow: [ashwhall/dsnt](https://github.com/ashwhall/dsnt)
+  * Be aware that this particular implementation represents coordinates in the (0, 1)
+    range, as opposed to the (-1, 1) range used here and in the paper.
 
 If you write your own implementation of DSNT, please let me know so that I can add it to
 the list. I would also *greatly* appreciate it if you could add the following notice
