@@ -32,6 +32,13 @@ def test_dsnt_forward():
     assert_allclose(actual, expected)
 
 
+
+def test_dsnt_forward_not_normalized():
+    expected = torch.tensor([[[3.0, 2.0]]])
+    actual = dsnt(SIMPLE_INPUT, normalized_coordinates=False)
+    assert_allclose(actual, expected)
+
+
 def test_dsnt_backward():
     in_var = SIMPLE_INPUT.detach().requires_grad_(True)
     output = dsnt(in_var)

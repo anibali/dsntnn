@@ -61,13 +61,17 @@ def normalized_linspace(length, dtype=None, device=None):
     return torch.linspace(first, last, length, dtype=dtype, device=device)
 
 
-def soft_argmax(heatmaps):
-    values = [normalized_linspace(d, dtype=heatmaps.dtype, device=heatmaps.device)
-              for d in heatmaps.size()[2:]]
+def soft_argmax(heatmaps, normalized_coordinates=True):
+    if normalized_coordinates:
+        values = [normalized_linspace(d, dtype=heatmaps.dtype, device=heatmaps.device)
+                  for d in heatmaps.size()[2:]]
+    else:
+        values = [torch.arange(0, d, dtype=heatmaps.dtype, device=heatmaps.device)
+                  for d in heatmaps.size()[2:]]
     return linear_expectation(heatmaps, values).flip(-1)
 
 
-def dsnt(heatmaps):
+def dsnt(heatmaps, **kwargs):
     """Differentiable spatial to numerical transform.
 
     Args:
@@ -76,7 +80,7 @@ def dsnt(heatmaps):
     Returns:
         Numerical coordinates corresponding to the locations in the heatmaps.
     """
-    return soft_argmax(heatmaps)
+    return soft_argmax(heatmaps, **kwargs)
 
 
 def flat_softmax(inp):
