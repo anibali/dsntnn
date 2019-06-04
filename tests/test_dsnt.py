@@ -1,9 +1,10 @@
 import torch
+from torch.nn.functional import mse_loss
 from torch.testing import assert_allclose
 
 from dsntnn import dsnt, linear_expectation
 
-SIMPLE_INPUT = torch.Tensor([[[
+SIMPLE_INPUT = torch.tensor([[[
     [0.0, 0.0, 0.0, 0.0, 0.0],
     [0.0, 0.0, 0.0, 0.1, 0.0],
     [0.0, 0.0, 0.1, 0.6, 0.1],
@@ -11,12 +12,12 @@ SIMPLE_INPUT = torch.Tensor([[[
     [0.0, 0.0, 0.0, 0.0, 0.0],
 ]]])
 
-SIMPLE_OUTPUT = torch.Tensor([[[0.4, 0.0]]])
+SIMPLE_OUTPUT = torch.tensor([[[0.4, 0.0]]])
 
-SIMPLE_TARGET = torch.Tensor([[[0.5, 0.5]]])
+SIMPLE_TARGET = torch.tensor([[[0.5, 0.5]]])
 
 # Expected dloss/dinput when using MSE with target (0.5, 0.5)
-SIMPLE_GRAD_INPUT = torch.Tensor([[[
+SIMPLE_GRAD_INPUT = torch.tensor([[[
     [0.4800, 0.4400, 0.4000, 0.3600, 0.3200],
     [0.2800, 0.2400, 0.2000, 0.1600, 0.1200],
     [0.0800, 0.0400, 0.0000, -0.0400, -0.0800],
@@ -32,12 +33,10 @@ def test_dsnt_forward():
 
 
 def test_dsnt_backward():
-    mse = torch.nn.MSELoss()
-
     in_var = SIMPLE_INPUT.detach().requires_grad_(True)
     output = dsnt(in_var)
 
-    loss = mse(output, SIMPLE_TARGET)
+    loss = mse_loss(output, SIMPLE_TARGET)
     loss.backward()
 
     assert_allclose(in_var.grad, SIMPLE_GRAD_INPUT)
@@ -61,7 +60,7 @@ def test_dsnt_cuda():
 
 
 def test_dsnt_3d():
-    inp = torch.Tensor([[
+    inp = torch.tensor([[
         [[
             [0.00, 0.00, 0.00],
             [0.00, 0.00, 0.00],
@@ -77,12 +76,12 @@ def test_dsnt_3d():
         ]]
     ]])
 
-    expected = torch.Tensor([[[-2/3, 2/3, 0]]])
+    expected = torch.tensor([[[-2/3, 2/3, 0]]])
     assert_allclose(dsnt(inp), expected)
 
 
 def test_dsnt_linear_expectation():
-    probs = torch.Tensor([[[
+    probs = torch.tensor([[[
         [0.0, 0.0, 0.0, 0.0, 0.0],
         [0.0, 0.0, 0.2, 0.3, 0.0],
         [0.0, 0.0, 0.3, 0.2, 0.0],
@@ -90,6 +89,6 @@ def test_dsnt_linear_expectation():
     ]]])
     values = [torch.arange(d, dtype=probs.dtype, device=probs.device) for d in probs.size()[2:]]
 
-    expected = torch.Tensor([[[1.5, 2.5]]])
+    expected = torch.tensor([[[1.5, 2.5]]])
     actual = linear_expectation(probs, values)
     assert_allclose(actual, expected)

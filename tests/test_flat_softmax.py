@@ -9,8 +9,8 @@ from dsntnn import flat_softmax
 
 
 def test_flat_softmax_example():
-    in_var = torch.Tensor([[[[10, 1], [5, 2]]]])
-    expected = torch.Tensor([[
+    in_var = torch.tensor([[[[10.0, 1.0], [5.0, 2.0]]]])
+    expected = torch.tensor([[
         [[0.99285460, 0.00012253],
          [0.00668980, 0.00033307]],
     ]])
@@ -25,7 +25,7 @@ def test_flat_softmax_gives_valid_distribution(data):
     inp = torch.from_numpy(data)
     res = flat_softmax(inp)
     # 1. Check that all probabilities are greater than zero.
-    assert np.all(res >= 0)
+    assert np.all(np.asarray(res) >= 0)
     # 2. Check that probabilities sum to one.
     res_flat = res.view(res.size(0) * res.size(1), -1)
     res_sum = res_flat.sum(-1)

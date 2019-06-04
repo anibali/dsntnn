@@ -6,7 +6,7 @@ from dsntnn import make_gauss, average_loss, kl_reg_losses, js_reg_losses, varia
 
 def _test_reg_loss(loss_method, uses_mean=True):
     # Target mean and standard deviation
-    target_mean = torch.Tensor([[[0, 0]]])
+    target_mean = torch.tensor([[[0.0, 0.0]]])
     target_stddev = 1.0
 
     # Helper function to calculate the loss between the target and a Gaussian heatmap
@@ -42,7 +42,7 @@ def test_kl_reg_loss():
 
 
 def test_kl_mask():
-    t = torch.Tensor([[
+    t = torch.tensor([[
         [
             [0.0, 0.0, 0.0, 0.0],
             [0.0, 0.0, 0.0, 0.0],
@@ -56,8 +56,8 @@ def test_kl_mask():
             [0.0, 0.0, 0.0, 0.0],
         ]
     ]])
-    coords = torch.Tensor([[[1, 1], [0, 0]]])
-    mask = torch.Tensor([[1, 0]])
+    coords = torch.tensor([[[1.0, 1.0], [0.0, 0.0]]])
+    mask = torch.tensor([[1.0, 0.0]])
 
     actual = average_loss(kl_reg_losses(t, coords, 2.0), mask)
 
@@ -65,7 +65,7 @@ def test_kl_mask():
 
 
 def test_kl_rectangular():
-    t = torch.Tensor([[
+    t = torch.tensor([[
         [
             [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
             [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
@@ -73,7 +73,7 @@ def test_kl_rectangular():
             [0.0, 0.0, 0.0, 0.0, 0.1, 0.8],
         ]
     ]])
-    coords = torch.Tensor([[[1, 1]]])
+    coords = torch.tensor([[[1.0, 1.0]]])
 
     actual = average_loss(kl_reg_losses(t, coords, 2.0))
 
@@ -89,7 +89,7 @@ def test_variance_reg_loss():
 
 
 def test_variance_exact():
-    t = torch.Tensor([[
+    t = torch.tensor([[
         [
             [0.0, 0.0, 0.0, 0.0],
             [0.0, 0.0, 0.1, 0.0],
@@ -103,7 +103,7 @@ def test_variance_exact():
 
 
 def test_variance_rectangular():
-    t = torch.Tensor([[
+    t = torch.tensor([[
         [
             [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
             [0.0, 0.0, 0.1, 0.0, 0.0, 0.0],
@@ -117,7 +117,7 @@ def test_variance_rectangular():
 
 
 def test_variance_3d():
-    t = torch.Tensor([[
+    t = torch.tensor([[
         [[
             [0.000035, 0.000002, 0.000000],
             [0.009165, 0.000570, 0.000002],
@@ -137,7 +137,7 @@ def test_variance_3d():
 
 
 def test_variance_batch():
-    t = torch.Tensor([
+    t = torch.tensor([
         [[
             [0.0, 0.0, 0.0, 0.0],
             [0.0, 0.0, 0.1, 0.0],
