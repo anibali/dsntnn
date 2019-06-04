@@ -2,7 +2,8 @@ import torch
 from torch.nn.functional import mse_loss
 from torch.testing import assert_allclose
 
-from dsntnn import dsnt, linear_expectation
+from dsntnn import dsnt, linear_expectation, normalized_to_pixel_coordinates, \
+    pixel_to_normalized_coordinates
 
 SIMPLE_INPUT = torch.tensor([[[
     [0.0, 0.0, 0.0, 0.0, 0.0],
@@ -30,7 +31,6 @@ def test_dsnt_forward():
     expected = SIMPLE_OUTPUT
     actual = dsnt(SIMPLE_INPUT)
     assert_allclose(actual, expected)
-
 
 
 def test_dsnt_forward_not_normalized():
@@ -98,4 +98,16 @@ def test_dsnt_linear_expectation():
 
     expected = torch.tensor([[[1.5, 2.5]]])
     actual = linear_expectation(probs, values)
+    assert_allclose(actual, expected)
+
+
+def test_normalized_to_pixel_coordinates():
+    expected = torch.tensor([0.5, 2.0])
+    actual = normalized_to_pixel_coordinates(torch.tensor([0.0, 0.0]), (5, 2))
+    assert_allclose(actual, expected)
+
+
+def test_pixel_to_normalized_coordinates():
+    expected = torch.tensor([0.0, 0.0])
+    actual = pixel_to_normalized_coordinates(torch.tensor([0.5, 2.0]), (5, 2))
     assert_allclose(actual, expected)

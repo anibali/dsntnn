@@ -264,3 +264,33 @@ def variance_reg_losses(heatmaps, sigma_t):
     sq_error = (actual_variance - target_variance) ** 2
 
     return sq_error.sum(-1, keepdim=False)
+
+
+def normalized_to_pixel_coordinates(coords, size):
+    """Convert from normalized coordinates to pixel coordinates.
+
+    Args:
+        coords: Coordinate tensor, where elements in the last dimension are ordered as (x, y, ...).
+        size: Number of pixels in each spatial dimension, ordered as (..., height, width).
+
+    Returns:
+        `coords` in pixel coordinates.
+    """
+    if torch.is_tensor(coords):
+        size = coords.new_tensor(size).flip(-1)
+    return 0.5 * ((coords + 1) * size - 1)
+
+
+def pixel_to_normalized_coordinates(coords, size):
+    """Convert from pixel coordinates to normalized coordinates.
+
+    Args:
+        coords: Coordinate tensor, where elements in the last dimension are ordered as (x, y, ...).
+        size: Number of pixels in each spatial dimension, ordered as (..., height, width).
+
+    Returns:
+        `coords` in normalized coordinates.
+    """
+    if torch.is_tensor(coords):
+        size = coords.new_tensor(size).flip(-1)
+    return ((2 * coords + 1) / size) - 1
