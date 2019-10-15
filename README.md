@@ -1,3 +1,5 @@
+:warning: **I have helped integrate DSNT into [Kornia](https://github.com/arraiyopensource/kornia) (from v0.1.4). New users are advised to use that implementation instead of this one. Existing users should note that the "normalised" coordinate system differs between the two implementations (see https://github.com/anibali/dsntnn/issues/15).**
+
 # PyTorch DSNT
 
 This repository contains the official implementation of the differentiable
