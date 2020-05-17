@@ -1,6 +1,5 @@
 from setuptools import setup, Command
 from subprocess import call
-from os import path
 import glob
 
 
@@ -44,7 +43,7 @@ with open('README.md') as f:
 
 setup(
     name='dsntnn',
-    version='0.5.0',
+    version='0.5.1',
     author='Aiden Nibali',
     description='PyTorch implementation of DSNT',
     long_description=long_description,

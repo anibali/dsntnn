@@ -8,4 +8,4 @@ numpy==1.16.3
 scipy==0.19.1
 hypothesis==4.24.0
 pytest==4.6.2
-pytest-cov=2.6.1
+pytest-cov==2.6.1

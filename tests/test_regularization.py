@@ -1,3 +1,4 @@
+import pytest
 import torch
 from pytest import approx
 
@@ -77,7 +78,7 @@ def test_kl_rectangular():
 
     actual = average_loss(kl_reg_losses(t, coords, 2.0))
 
-    assert actual.item() == 1.2646753877545842
+    assert actual.item() == pytest.approx(1.26467538775)
 
 
 def test_js_reg_loss():
