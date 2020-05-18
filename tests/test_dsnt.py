@@ -1,9 +1,13 @@
+import os
+from tempfile import TemporaryDirectory
+
 import torch
+from torch import nn, onnx
 from torch.nn.functional import mse_loss
 from torch.testing import assert_allclose
 
 from dsntnn import dsnt, linear_expectation, normalized_to_pixel_coordinates, \
-    pixel_to_normalized_coordinates
+    pixel_to_normalized_coordinates, flat_softmax
 
 SIMPLE_INPUT = torch.tensor([[[
     [0.0, 0.0, 0.0, 0.0, 0.0],
@@ -129,3 +133,18 @@ def test_pixel_to_normalized_coordinates():
     expected = torch.tensor([0.0, 0.0])
     actual = pixel_to_normalized_coordinates(torch.tensor([0.5, 2.0]), (5, 2))
     assert_allclose(actual, expected)
+
+
+def test_onnx():
+    class SimpleModel(nn.Module):
+        def forward(self, x):
+            x = flat_softmax(x)
+            x = dsnt(x, normalized_coordinates=True)
+            return x
+    dummy_input = torch.randn((2, 4, 32, 32))
+    model = SimpleModel()
+    model.eval()
+    with TemporaryDirectory() as d:
+        onnx_file = os.path.join(d, 'model.onnx')
+        onnx.export(model, (dummy_input,), onnx_file, verbose=False)
+        assert os.path.isfile(onnx_file)

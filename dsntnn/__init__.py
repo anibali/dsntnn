@@ -69,7 +69,11 @@ def soft_argmax(heatmaps, normalized_coordinates=True):
     else:
         values = [torch.arange(0, d, dtype=heatmaps.dtype, device=heatmaps.device)
                   for d in heatmaps.size()[2:]]
-    return linear_expectation(heatmaps, values).flip(-1)
+    coords = linear_expectation(heatmaps, values)
+    # We flip the tensor like this instead of using `coords.flip(-1)` because aten::flip is not yet
+    # supported by the ONNX exporter.
+    coords = torch.cat(tuple(reversed(coords.split(1, -1))), -1)
+    return coords
 
 
 def dsnt(heatmaps, **kwargs):
