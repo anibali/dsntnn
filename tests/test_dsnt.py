@@ -33,9 +33,27 @@ def test_dsnt_forward():
     assert_allclose(actual, expected)
 
 
+def test_dsnt_trace():
+    def op(inp):
+        return dsnt(inp, normalized_coordinates=True)
+    jit_op = torch.jit.trace(op, (SIMPLE_INPUT,))
+    expected = op(SIMPLE_INPUT)
+    actual = jit_op(SIMPLE_INPUT)
+    assert_allclose(actual, expected)
+
+
 def test_dsnt_forward_not_normalized():
     expected = torch.tensor([[[3.0, 2.0]]])
     actual = dsnt(SIMPLE_INPUT, normalized_coordinates=False)
+    assert_allclose(actual, expected)
+
+
+def test_dsnt_trace_not_normalized():
+    def op(inp):
+        return dsnt(inp, normalized_coordinates=False)
+    jit_op = torch.jit.trace(op, (SIMPLE_INPUT,))
+    expected = op(SIMPLE_INPUT)
+    actual = jit_op(SIMPLE_INPUT)
     assert_allclose(actual, expected)
 
 

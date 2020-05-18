@@ -56,8 +56,10 @@ def normalized_linspace(length, dtype=None, device=None):
     Returns:
         The generated vector
     """
-    first = -(length - 1) / length
-    return torch.arange(length, dtype=dtype, device=device) * (2 / length) + first
+    if isinstance(length, torch.Tensor):
+        length = length.to(device, dtype)
+    first = -(length - 1.0) / length
+    return torch.arange(length, dtype=dtype, device=device) * (2.0 / length) + first
 
 
 def soft_argmax(heatmaps, normalized_coordinates=True):
