@@ -1,0 +1,8 @@
+name: dsntnn
+channels:
+  - pytorch
+dependencies:
+  - python=3.7.4
+  - pip=20.0.2
+  - cudatoolkit=10.0
+  - "pytorch=1.1.0=py3.7_cuda10.0.130_cudnn7.5.1_0"
