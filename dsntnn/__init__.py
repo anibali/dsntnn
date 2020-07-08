@@ -98,7 +98,7 @@ def flat_softmax(inp):
 
 
 def euclidean_losses(actual, target):
-    """Calculate the average Euclidean loss for multi-point samples.
+    """Calculate the Euclidean losses for multi-point samples.
 
     Each sample must contain `n` points, each with `d` dimensions. For example,
     in the MPII human pose estimation task n=16 (16 joint locations) and
@@ -107,15 +107,41 @@ def euclidean_losses(actual, target):
     Args:
         actual (Tensor): Predictions (B x L x D)
         target (Tensor): Ground truth target (B x L x D)
+
+
+    Returns:
+        Tensor: Losses (B x L)
     """
-
     assert actual.size() == target.size(), 'input tensors must have the same size'
+    return torch.norm(actual - target, p=2, dim=-1, keepdim=False)
 
-    # Calculate Euclidean distances between actual and target locations
-    diff = actual - target
-    dist_sq = diff.pow(2).sum(-1, keepdim=False)
-    dist = dist_sq.sqrt()
-    return dist
+
+def l1_losses(actual, target):
+    """Calculate the average L1 losses for multi-point samples.
+
+    Args:
+        actual (Tensor): Predictions (B x L x D)
+        target (Tensor): Ground truth target (B x L x D)
+
+    Returns:
+        Tensor: Losses (B x L)
+    """
+    assert actual.size() == target.size(), 'input tensors must have the same size'
+    return torch.nn.functional.l1_loss(actual, target, reduction='none').mean(-1)
+
+
+def mse_losses(actual, target):
+    """Calculate the average squared L2 losses for multi-point samples.
+
+    Args:
+        actual (Tensor): Predictions (B x L x D)
+        target (Tensor): Ground truth target (B x L x D)
+
+    Returns:
+        Tensor: Losses (B x L)
+    """
+    assert actual.size() == target.size(), 'input tensors must have the same size'
+    return torch.nn.functional.mse_loss(actual, target, reduction='none').mean(-1)
 
 
 def make_gauss(means, size, sigma, normalize=True):
