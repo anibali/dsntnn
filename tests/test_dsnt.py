@@ -7,7 +7,7 @@ from torch.nn.functional import mse_loss
 from torch.testing import assert_allclose
 
 from dsntnn import dsnt, linear_expectation, normalized_to_pixel_coordinates, \
-    pixel_to_normalized_coordinates, flat_softmax
+    pixel_to_normalized_coordinates, flat_softmax, sharpen_heatmaps
 
 SIMPLE_INPUT = torch.tensor([[[
     [0.0, 0.0, 0.0, 0.0, 0.0],
@@ -107,6 +107,19 @@ def test_dsnt_3d():
 
     expected = torch.tensor([[[-2/3, 2/3, 0]]])
     assert_allclose(dsnt(inp), expected)
+
+
+def test_sharpened_dsnt_forward():
+    inp = torch.tensor([[[
+        [0.0, 0.0, 0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0, 0.1, 0.0],
+        [0.1, 0.0, 0.0, 0.6, 0.1],
+        [0.0, 0.0, 0.0, 0.1, 0.0],
+        [0.0, 0.0, 0.0, 0.0, 0.0],
+    ]]])
+    expected = torch.tensor([[[0.399983, 0.0]]])
+    actual = dsnt(sharpen_heatmaps(inp, alpha=6))
+    assert_allclose(actual, expected)
 
 
 def test_dsnt_linear_expectation():
